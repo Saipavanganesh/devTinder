@@ -33,12 +33,12 @@ app.get("/oneUser", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
     const users = await User.findOne({ emailId: userEmail });
-    if (users !== 0) {
+    if (!users) {
       res.status(404).send("User not found");
     } else {
       res.send(users);
     }
-  } catch(err) {
+  } catch (err) {
     res.status(500).send(`Something went wrong ${err.message}`);
   }
 });
@@ -54,6 +54,41 @@ app.get("/feed", async (req, res) => {
     }
   } catch {
     res.status(500).send("Something went wrong");
+  }
+});
+//DELETE user by id
+app.delete("/user", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const users = await User.findByIdAndDelete(userId);
+    res.send("user deleted");
+  } catch {
+    res.status(500).send("Something went wrong");
+  }
+});
+
+//PATCH user by id
+app.patch("/user/:userId", async (req, res) => {
+  const userId = req.params?.userId;
+  const data = req.body;
+  try {
+    const ALLOWED_UPDATES = ["photoUrl", "age", "about", "gender", "skills"];
+    const isUpdateAllowed = Object.keys(data).every((k) =>
+      ALLOWED_UPDATES.includes(k)
+    );
+    if (!isUpdateAllowed) {
+      throw new Error("Update not allowed");
+    }
+    if (data?.skills.length > 10) {
+      throw new Error("Skills cannot be more than 10");
+    }
+    await User.findByIdAndUpdate(userId, data, {
+      returnDocument: "after",
+      runValidators: true,
+    });
+    res.send("User Updated");
+  } catch (err) {
+    res.status(500).send(`Something went wrong while updating ${err.message}`);
   }
 });
 
