@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -6,12 +7,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength:50
+      maxlength: 50,
     },
     lastName: {
-        type: String,
-        trim: true,
-        maxlength:50
+      type: String,
+      trim: true,
+      maxlength: 50,
     },
     emailId: {
       type: String,
@@ -19,10 +20,20 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       trim: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Invalid email " + value);
+        }
+      },
     },
     password: {
       type: String,
       required: true,
+      validate(value) {
+        if (!validator.isStrongPassword(value)) {
+          throw new Error("Enter a strong password " + value);
+        }
+      },
     },
     age: {
       type: Number,
@@ -39,6 +50,11 @@ const userSchema = new mongoose.Schema(
     photoUrl: {
       type: String,
       default: "https://bhuvanaconsultancy.in/images/Men-Profile.png",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("Invalid Photo URL " + value);
+        }
+      },
     },
     about: {
       type: String,
