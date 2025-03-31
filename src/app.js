@@ -6,18 +6,16 @@ const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 app.use(express.json());
 app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
-    //validate user data
     validateSignUpData(req);
     const { firstName, lastName, emailId, password } = req.body;
-    //Encrypt password using bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
-    //Create instance of user model
     const user = new User({
       firstName,
       lastName,
@@ -43,8 +41,12 @@ app.post("/login", async (req, res) => {
     }
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (isPasswordValid) {
-      const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$970");
-      res.cookie("token", token);
+      const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$970", {
+        expiresIn: "7d",
+      });
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+      });
       res.send("User logged in successfully");
     } else {
       throw new Error("Invalid credentials");
@@ -54,22 +56,10 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/profile", async (req, res) => {
+app.get("/profile", userAuth, async (req, res) => {
   try {
-    const cookies = req.cookies;
-    const { token } = cookies;
-    if (!token) {
-      return res.status(401).send("Unauthorized access");
-    } else {
-      const decodedMessage = await jwt.verify(token, "DEV@Tinder$970");
-      const { _id } = decodedMessage;
-      const user = await User.findById(_id);
-      if (!user) {
-        return res.status(404).send("User not found");
-      } else {
-        res.send(`${user}`);
-      }
-    }
+    const user = req.user;
+    res.send(user);
   } catch (err) {
     res.status(500).send("Something went wrong " + err.message);
   }
@@ -115,7 +105,7 @@ app.get("/feed", async (req, res) => {
     res.status(500).send("Something went wrong");
   }
 });
- 
+
 app.delete("/user", async (req, res) => {
   try {
     const userId = req.body.userId;
@@ -145,6 +135,14 @@ app.patch("/user/:userId", async (req, res) => {
       runValidators: true,
     });
     res.send("User Updated");
+  } catch (err) {
+    res.status(500).send(`Something went wrong while updating ${err.message}`);
+  }
+});
+app.post("/sendConnectionRequest", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    res.send(`${user.firstName} Sent Connection Request`);
   } catch (err) {
     res.status(500).send(`Something went wrong while updating ${err.message}`);
   }
