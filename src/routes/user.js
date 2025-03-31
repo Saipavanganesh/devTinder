@@ -2,6 +2,21 @@ const express = require("express");
 const userRouter = express.Router();
 const User = require("../models/user");
 
+
+userRouter.get("/user", async (req, res) => {
+  const userEmail = req.body.emailId;
+  try {
+    const users = await User.find({ emailId: userEmail });
+    if (users.length === 0) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(users);
+    }
+  } catch {
+    res.status(500).send("Something went wrong");
+  }
+});
+
 userRouter.get("/feed", async (req, res) => {
     try {
       const users = await User.find({});
@@ -25,30 +40,6 @@ userRouter.get("/feed", async (req, res) => {
     }
   });
   
-  userRouter.patch("/user/:userId", async (req, res) => {
-    const userId = req.params?.userId;
-    const data = req.body;
-    try {
-      const ALLOWED_UPDATES = ["photoUrl", "age", "about", "gender", "skills"];
-      const isUpdateAllowed = Object.keys(data).every((k) =>
-        ALLOWED_UPDATES.includes(k)
-      );
-      if (!isUpdateAllowed) {
-        throw new Error("Update not allowed");
-      }
-      if (data?.skills?.length > 10) {
-        throw new Error("Skills cannot be more than 10");
-      }
-      await User.findByIdAndUpdate(userId, data, {
-        returnDocument: "after",
-        runValidators: true,
-      });
-      res.send("User Updated");
-    } catch (err) {
-      res.status(500).send(`Something went wrong while updating ${err.message}`);
-    }
-  });
-
   userRouter.get("/oneUser", async (req, res) => {
     const userEmail = req.body.emailId;
     try {
