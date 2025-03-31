@@ -4,23 +4,25 @@ const app = express();
 const User = require("./models/user");
 const { validateSignUpData } = require("./utils/validation");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json());
+app.use(cookieParser());
 
-//POST signup user
 app.post("/signup", async (req, res) => {
   try {
     //validate user data
     validateSignUpData(req);
-    const {firstName, lastName, emailId, password } = req.body;
+    const { firstName, lastName, emailId, password } = req.body;
     //Encrypt password using bcrypt
     const passwordHash = await bcrypt.hash(password, 10);
     //Create instance of user model
     const user = new User({
-        firstName,
-        lastName,
-        emailId,
-        password: passwordHash,
+      firstName,
+      lastName,
+      emailId,
+      password: passwordHash,
     });
     await user.save();
     res.send("User added succesfully");
@@ -29,7 +31,50 @@ app.post("/signup", async (req, res) => {
   }
 });
 
-//GET user by email
+app.post("/login", async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+    if (!emailId || !password) {
+      throw new Error("Email or password is not valid");
+    }
+    const user = await User.findOne({ emailId: emailId });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (isPasswordValid) {
+      const token = await jwt.sign({ _id: user._id }, "DEV@Tinder$970");
+      res.cookie("token", token);
+      res.send("User logged in successfully");
+    } else {
+      throw new Error("Invalid credentials");
+    }
+  } catch (err) {
+    res.status(400).send(`Error in login user: ${err.message}`);
+  }
+});
+
+app.get("/profile", async (req, res) => {
+  try {
+    const cookies = req.cookies;
+    const { token } = cookies;
+    if (!token) {
+      return res.status(401).send("Unauthorized access");
+    } else {
+      const decodedMessage = await jwt.verify(token, "DEV@Tinder$970");
+      const { _id } = decodedMessage;
+      const user = await User.findById(_id);
+      if (!user) {
+        return res.status(404).send("User not found");
+      } else {
+        res.send(`${user}`);
+      }
+    }
+  } catch (err) {
+    res.status(500).send("Something went wrong " + err.message);
+  }
+});
+
 app.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
@@ -43,7 +88,7 @@ app.get("/user", async (req, res) => {
     res.status(500).send("Something went wrong");
   }
 });
-//GET one user by email
+
 app.get("/oneUser", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
@@ -58,7 +103,6 @@ app.get("/oneUser", async (req, res) => {
   }
 });
 
-//GET all users
 app.get("/feed", async (req, res) => {
   try {
     const users = await User.find({});
@@ -71,7 +115,7 @@ app.get("/feed", async (req, res) => {
     res.status(500).send("Something went wrong");
   }
 });
-//DELETE user by id
+ 
 app.delete("/user", async (req, res) => {
   try {
     const userId = req.body.userId;
@@ -82,7 +126,6 @@ app.delete("/user", async (req, res) => {
   }
 });
 
-//PATCH user by id
 app.patch("/user/:userId", async (req, res) => {
   const userId = req.params?.userId;
   const data = req.body;
