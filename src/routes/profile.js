@@ -5,7 +5,7 @@ const { validateEditProfileData } = require("../utils/validation");
 const validator = require("validator");
 const bcrypt = require("bcrypt");
 
-profileRouter.get("/profile", userAuth, async (req, res) => {
+profileRouter.get("/profile/view", userAuth, async (req, res) => {
   try {
     const user = req.user;
     res.send(user);

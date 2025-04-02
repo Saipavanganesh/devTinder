@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
+      index: true, 
       required: true,
       trim: true,
       maxlength: 50,
@@ -43,12 +44,13 @@ const userSchema = new mongoose.Schema(
     },
     gender: {
       type: String,
-      validate(value) {
-        if (!["male", "female", "others"].includes(value)) {
-          throw new Error("Gender data not valid");
-        }
+
+      enum: {
+        values: ["male", "female", "other"],
+        message: `{value} is not a valid gender`,
       },
     },
+
     photoUrl: {
       type: String,
       default: "https://bhuvanaconsultancy.in/images/Men-Profile.png",
