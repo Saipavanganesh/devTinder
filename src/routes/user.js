@@ -80,9 +80,16 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
         { fromUserId: loggedInUser._id, status: "accepted" },
         { toUserId: loggedInUser._id, status: "accepted" },
       ],
-    }).populate("fromUserId", USER_SAFE_DATA);
+    })
+      .populate("fromUserId", USER_SAFE_DATA)
+      .populate("toUserId", USER_SAFE_DATA);
 
-    const data = connectionRequests.map((request) => request.fromUserId);
+    const data = connectionRequests.map((request) => {
+      if (request.fromUserId._id.toString() === loggedInUser._id.toString()) {
+        return request.toUserId;
+      }
+      return request.fromUserId;
+    });
 
     res.json({
       message: "Connection requests fetched",
