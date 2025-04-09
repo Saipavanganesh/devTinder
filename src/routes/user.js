@@ -1,8 +1,8 @@
 const express = require("express");
 const userRouter = express.Router();
 const User = require("../models/user");
-
-
+const { userAuth } = require("../middlewares/auth");
+const ConnectionRequest = require("../models/connectionRequest");
 userRouter.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
   try {
@@ -18,41 +18,59 @@ userRouter.get("/user", async (req, res) => {
 });
 
 userRouter.get("/feed", async (req, res) => {
-    try {
-      const users = await User.find({});
-      if (users.length === 0) {
-        res.status(404).send("Users not found");
-      } else {
-        res.send(users);
-      }
-    } catch {
-      res.status(500).send("Something went wrong");
+  try {
+    const users = await User.find({});
+    if (users.length === 0) {
+      res.status(404).send("Users not found");
+    } else {
+      res.send(users);
     }
-  });
-  
-  userRouter.delete("/user", async (req, res) => {
-    try {
-      const userId = req.body.userId;
-      const users = await User.findByIdAndDelete(userId);
-      res.send("user deleted");
-    } catch {
-      res.status(500).send("Something went wrong");
+  } catch {
+    res.status(500).send("Something went wrong");
+  }
+});
+
+userRouter.delete("/user", async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const users = await User.findByIdAndDelete(userId);
+    res.send("user deleted");
+  } catch {
+    res.status(500).send("Something went wrong");
+  }
+});
+
+userRouter.get("/oneUser", async (req, res) => {
+  const userEmail = req.body.emailId;
+  try {
+    const users = await User.findOne({ emailId: userEmail });
+    if (!users) {
+      res.status(404).send("User not found");
+    } else {
+      res.send(users);
     }
-  });
-  
-  userRouter.get("/oneUser", async (req, res) => {
-    const userEmail = req.body.emailId;
-    try {
-      const users = await User.findOne({ emailId: userEmail });
-      if (!users) {
-        res.status(404).send("User not found");
-      } else {
-        res.send(users);
-      }
-    } catch (err) {
-      res.status(500).send(`Something went wrong ${err.message}`);
-    }
-  });
-  
+  } catch (err) {
+    res.status(500).send(`Something went wrong ${err.message}`);
+  }
+});
+
+userRouter.get("/user/requests/received", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const connectionRequests = await ConnectionRequest.find({
+      toUserId: loggedInUser._id,
+      status: "interested",
+    }).populate(
+      "fromUserId",
+      "firstName lastName photoUrl age gender about skills"
+    );
+    // }).populate("fromUserId", ["firstName", "lastName","photoUrl"]);
+    res.json({
+      message: "Connection requests fetched",
+      data: connectionRequests,
+    });
+  } catch (err) {
+    res.status(400).send(`Error: ${err.message}`);
+  }
+});
 module.exports = userRouter;
-  
