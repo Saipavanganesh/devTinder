@@ -8,10 +8,15 @@ const requestRouter = require("./routes/requests");
 const cookieParser = require("cookie-parser");
 const cors = require("cors")
 
+
 app.use(cors({
     origin:"http://localhost:5173",
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
     credentials:true,
 }));
+
+app.options('*', cors()); // Handle preflight OPTIONS requests
+
 app.use(express.json());
 app.use(cookieParser());
 

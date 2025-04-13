@@ -14,7 +14,7 @@ profileRouter.get("/profile/view", userAuth, async (req, res) => {
   }
 });
 
-profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
+profileRouter.put("/profile/edit", userAuth, async (req, res) => {
   try {
     if (!validateEditProfileData(req)) {
       throw new Error("Invalid Edit Request");
@@ -36,7 +36,7 @@ profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   }
 });
 
-profileRouter.patch("/profile/password", userAuth, async (req, res) => {
+profileRouter.put("/profile/password", userAuth, async (req, res) => {
   try {
     console.log(req.body);
     const newPassword = req.body.password;

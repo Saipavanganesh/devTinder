@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      index: true, 
+      index: true,
       required: true,
       trim: true,
       maxlength: 50,
@@ -47,7 +47,7 @@ const userSchema = new mongoose.Schema(
 
       enum: {
         values: ["male", "female", "other"],
-        message: `{value} is not a valid gender`,
+        message: `Gender must be either male, female, or other`,
       },
     },
 

@@ -3,7 +3,7 @@ const userRouter = express.Router();
 const User = require("../models/user");
 const { userAuth } = require("../middlewares/auth");
 const ConnectionRequest = require("../models/connectionRequest");
-const USER_SAFE_DATA = "firstName lastName photoUrl age gender about skills";
+const USER_SAFE_DATA = "    ";
 
 userRouter.get("/user", async (req, res) => {
   const userEmail = req.body.emailId;
@@ -82,7 +82,7 @@ userRouter.get("/user/connections", userAuth, async (req, res) => {
       message: "Connection requests fetched",
       data: data,
     });
-  } catch (err) {
+  } catch (err) { 
     res.status(400).send(`Error: ${err.message}`);
   }
 });
